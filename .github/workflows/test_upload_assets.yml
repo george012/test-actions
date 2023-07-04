@@ -1,0 +1,35 @@
+name: Test Action With Assets
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Current Repository
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Make Test File
+        id: make-test-file
+        run: |
+          wget --no-check-certificate https://raw.githubusercontent.com/george012/gt_script/master/github_repo_version_scan.sh \
+          && chmod a+x ./github_repo_version_scan.sh \
+          && upload_url=$(./github_repo_version_scan.sh --get_latest_upload_url github.com/$GITHUB_REPOSITORY) \
+          && echo "UPLOAD_URL=$upload_url" >> $GITHUB_ENV \
+          && echo "Test By ${date}" > test_actions.txt
+
+      - name: Upload Test asset
+        uses: george012/upload-release-asset@latest
+        with:
+          upload_url: ${{ env.UPLOAD_URL }}
+          asset_path: ./test_actions.txt
+          asset_name: test_actions.txt
+          asset_content_type: application/txt
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
